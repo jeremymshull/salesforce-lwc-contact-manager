@@ -1,5 +1,5 @@
 import { LightningElement, api } from 'lwc';
-import saveContact from '@salesforce/apex/ContactController.saveContact';
+import createContact from '@salesforce/apex/ContactController.createContact';
 
 export default class ContactInputForm extends LightningElement {
   @api accountId;
@@ -13,7 +13,7 @@ export default class ContactInputForm extends LightningElement {
   }
 
   handleNewContact(event) {
-    saveContact({ 
+    createContact({ 
       firstName: this.firstName, 
       lastName: this.lastName, 
       phone: this.phone, 

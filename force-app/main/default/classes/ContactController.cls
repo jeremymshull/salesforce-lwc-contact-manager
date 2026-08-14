@@ -9,7 +9,7 @@ public with sharing class ContactController {
     }
 
     @AuraEnabled
-    public static void saveContact(String firstName, String lastName, String email, String phone, Id accountId) {
+    public static void createContact(String firstName, String lastName, String email, String phone, Id accountId) {
         Contact newContact = new Contact(
             FirstName = firstName,
             LastName = lastName,
