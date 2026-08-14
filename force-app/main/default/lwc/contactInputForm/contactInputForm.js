@@ -1,5 +1,6 @@
 import { LightningElement, api } from 'lwc';
-import saveContact from '@salesforce/apex/ContactController.saveContact';
+import createContact from '@salesforce/apex/ContactController.createContact';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class ContactInputForm extends LightningElement {
   @api accountId;
@@ -13,7 +14,7 @@ export default class ContactInputForm extends LightningElement {
   }
 
   handleNewContact(event) {
-    saveContact({ 
+    createContact({ 
       firstName: this.firstName, 
       lastName: this.lastName, 
       phone: this.phone, 
@@ -32,12 +33,25 @@ export default class ContactInputForm extends LightningElement {
         }) 
       );
 
-      this.clearFields(); 
+      this.clearFields();
+      
+      this.showToast('Success!', 'Contact created successfully!', 'success');
     }) 
     .catch(error => { 
+      this.showToast('Error', error.body?.message ?? 'Unknown error', 'error');
       console.error('Error saving contact:', error); 
     }) 
-  } 
+  }
+  
+  showToast(title, message, variant) {
+    this.dispatchEvent(
+      new ShowToastEvent({
+        title,
+        message,
+        variant
+      })
+    );
+  }
   
   clearFields() { 
     this.firstName = ''; 

@@ -4,12 +4,13 @@ public with sharing class ContactController {
         return [
             SELECT Id, FirstName, LastName, Email, Phone
             FROM Contact
-            WHERE AccountId  = :accountId   
+            WHERE AccountId  = :accountId
+            WITH USER_MODE   
         ];
     }
 
     @AuraEnabled
-    public static void saveContact(String firstName, String lastName, String email, String phone, Id accountId) {
+    public static void createContact(String firstName, String lastName, String email, String phone, Id accountId) {
         Contact newContact = new Contact(
             FirstName = firstName,
             LastName = lastName,
@@ -18,6 +19,17 @@ public with sharing class ContactController {
             AccountId = accountId
         );
 
-        insert newContact;
+        insert as user newContact;
+    }
+
+    @AuraEnabled
+    public static List<Contact> updateContacts(List<Contact> contacts) {
+        update as user contacts;
+        return [
+            SELECT Id, FirstName, LastName, Email, Phone
+            FROM Contact 
+            WHERE Id IN :contacts
+            WITH USER_MODE
+        ];
     }
 }
