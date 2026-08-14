@@ -1,58 +1,114 @@
-# Salesforce DX Project
+# Real World LWC Project
 
-Salesforce DX is a development approach that brings source-driven development, team collaboration, and continuous integration to the Salesforce Platform. Instead of working directly in an org through a web browser, you work with metadata as source files in a local DX project, track changes in version control, and deploy through automated processes.
+## Project: Related Contacts Feature
 
-This project template gets you started with the tools and structure you need to build Salesforce applications using source control, scratch orgs, and the Salesforce CLI.
+This project implements a Related Contacts feature for Account record pages, allowing users to view, create, and inline-edit contacts directly from the Account detail page.
 
-## Prerequisites
+---
 
-Before you start, make sure you have:
+## Components
 
-- **Salesforce CLI** - Download from [developer.salesforce.com/tools/salesforcecli](https://developer.salesforce.com/tools/salesforcecli). See [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for details.
-- **VS Code with Salesforce Extension Pack** - See [Installation Instructions](https://developer.salesforce.com/docs/platform/sfvscode-extensions/guide/install.html) for details. Includes the Agentforce Vibes extension.
-- **A development org** - Sign up for a free Developer Edition org [here](https://developer.salesforce.com/signup).
-- **Dev Hub enabled** (optional, required to create scratch orgs) - You can enable Dev Hub in your development org under Setup > Dev Hub.  See [Provide Developers Access to Salesforce DX Tools](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_dx_tools.htm).
+### `contactWorkspace` (Parent)
+A Lightning Web Component placed on the Account record page via App Builder.
 
-## Project Structure
+- **Target:** `lightning__RecordPage`
+- **Receives:** `recordId` from the record page context
+- **Responsibilities:**
+  - Fetches all related contacts on load via `queryContacts`
+  - Renders contacts in an editable `lightning-datatable`
+  - Handles inline cell edits with draft values and saves via `updateContacts`
+  - Fires success/error toast notifications for fetch and save operations
+  - Listens for `newcontact` events from `contactInputForm` and appends the new contact to the table without re-querying
 
-Your DX project follows this structure:
+**Public API:**
 
-- **`force-app/main/default/`** - Your metadata source files live in this default package directory. You can configure additional package directories in the `sfdx-project.json` file.
-- **`config/`** - Scratch org definitions and project settings
-- **`scripts/`** - Automation scripts for common tasks
-- **`sfdx-project.json`** - Project manifest that defines package directories, namespace, API version, and other project-level settings
+| Property | Type | Description |
+|---|---|---|
+| `recordId` | `Id` | Injected automatically by the record page; used to scope contact queries to the current Account |
 
-See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
+---
 
-## Get Started
+### `contactInputForm` (Child)
+A form component embedded inside `contactWorkspace` for creating new contacts.
 
-Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.
+- **Target:** Not directly exposed (child component only)
+- **Receives:** `accountId` from the parent
+- **Responsibilities:**
+  - Captures First Name, Last Name, Email, and Phone via `lightning-input` fields
+  - Creates a new Contact record via `createContact` on button click
+  - Fires a `newcontact` custom event with the new contact's field values so the parent table updates immediately
+  - Clears all fields after a successful save
+  - Fires success/error toast notifications for create operations
 
-## Common Salesforce CLI Commands
+**Public API:**
 
-Here are common CLI commands that you'll use the most:
+| Property | Type | Description |
+|---|---|---|
+| `accountId` | `Id` | The Account Id to associate the new contact with |
 
-- `sf org login web`: Authorize an org
-- `sf org open`: Open your org in a browser
-- `sf org create scratch`: Create a scratch org
-- `sf project deploy start`: Deploy metadata to your org
-- `sf project retrieve start`: Retrieve metadata from your org
-- `sf template generate <artifact>`: Scaffold new components, such as Apex classes and triggers, LWC components, Lightning apps, and more
-- `sf apex <command>`: Run Apex tests, run anonymous Apex blocks, and view logs
-- `sf data <command>`: Work with test data
-- `sf alias <command>`: Manage org aliases
-- `sf config <command>`: Configure CLI settings
+**Events fired:**
 
-## Use Agentforce Vibes to Build Lightning Apps
+| Event | Detail | Description |
+|---|---|---|
+| `newcontact` | `{ FirstName, LastName, Phone, Email }` | Fired after a successful contact insert so the parent datatable updates without a re-query |
 
-Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
+---
 
-## Additional Resources
+## Apex
 
-- [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)
-- [Salesforce CLI Installation Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/)
-- [Salesforce CLI Plugin Development Guide](https://developer.salesforce.com/docs/platform/salesforce-cli-plugin/guide/conceptual-overview.html)
-- [Salesforce VS Code Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
+### `ContactController`
+Server-side controller for all contact data operations.
 
+| Method | Signature | Description |
+|---|---|---|
+| `queryContacts` | `List<Contact> queryContacts(Id accountId)` | Returns all contacts for the given Account, selecting `Id`, `FirstName`, `LastName`, `Email`, `Phone` |
+| `createContact` | `void createContact(String firstName, String lastName, String email, String phone, Id accountId)` | Inserts a new Contact record linked to the given Account |
+| `updateContacts` | `List<Contact> updateContacts(List<Contact> contacts)` | Bulk-updates the provided contacts and returns the refreshed records |
+
+All methods use `with sharing` for record-level security enforcement.
+
+---
+
+### `ContactControllerTest`
+Apex test class covering all three `ContactController` methods.
+
+| Test Method | Scenario |
+|---|---|
+| `shouldReturnContacts_WhenValidAccountId` | Returns all 251 seeded contacts with expected field values |
+| `shouldReturnEmpty_WhenAccountHasNoContacts` | Returns empty list for an account with no contacts |
+| `shouldReturnEmpty_WhenAccountIdIsNull` | Returns empty list when null is passed as the account ID |
+| `shouldCreateContact_WhenValidInput` | Inserts a contact and verifies all field values |
+| `shouldThrowException_WhenLastNameIsNull` | Throws `DmlException` when required `LastName` is omitted |
+| `shouldUpdateContacts_WhenValidInput` | Updates 5 contacts and verifies returned field values |
+| `shouldUpdateContacts_WhenBulk251Records` | Bulk-updates 251 contacts across the trigger batch boundary |
+| `shouldReturnEmpty_WhenUpdateCalledWithEmptyList` | Returns empty list when an empty list is passed |
+
+---
+
+### `TestDataFactory`
+Shared test data factory used by all test classes.
+
+| Method | Description |
+|---|---|
+| `createAccounts(Integer count, Boolean doInsert)` | Creates and optionally inserts a list of Accounts |
+| `createAccount(Boolean doInsert)` | Creates and optionally inserts a single Account |
+| `createContacts(Account account, Integer count, Boolean doInsert)` | Creates and optionally inserts contacts linked to the given Account |
+| `createContact(Account account, Boolean doInsert)` | Creates and optionally inserts a single contact linked to the given Account |
+
+---
+
+## Deployment
+
+Deploy all metadata to your org:
+
+```bash
+sf project deploy start --source-dir force-app/main/default --target-org <your-alias>
+```
+
+Run the Apex test suite:
+
+```bash
+sf apex run test --class-names ContactControllerTest --result-format human --code-coverage --target-org <your-alias>
+```
+
+After deploying, add `contactWorkspace` to the Account record page via **Setup > Lightning App Builder**.
