@@ -11,6 +11,9 @@
         key-field="Id"
         data={contacts}
         columns={columns}
+        draft-values={draftValues}
+        onsave={handleSave}
+        oncancel={handleCancel}
         hide-checkbox-column>
       </lightning-datatable>
     </div>

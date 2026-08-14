@@ -4,7 +4,8 @@ public with sharing class ContactController {
         return [
             SELECT Id, FirstName, LastName, Email, Phone
             FROM Contact
-            WHERE AccountId  = :accountId   
+            WHERE AccountId  = :accountId
+            WITH USER_MODE   
         ];
     }
 
@@ -18,16 +19,17 @@ public with sharing class ContactController {
             AccountId = accountId
         );
 
-        insert newContact;
+        insert as user newContact;
     }
 
     @AuraEnabled
     public static List<Contact> updateContacts(List<Contact> contacts) {
-        update contacts;
+        update as user contacts;
         return [
             SELECT Id, FirstName, LastName, Email, Phone
             FROM Contact 
             WHERE Id IN :contacts
+            WITH USER_MODE
         ];
     }
 }
