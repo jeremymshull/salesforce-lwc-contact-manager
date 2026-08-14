@@ -1,0 +1,38 @@
+<template>
+   <div class="slds-m-around_medium">
+    <lightning-input
+      name="firstName" 
+      type="text" 
+      label="First Name"
+      value={firstName} 
+      onchange={handleInputChange}>
+    </lightning-input>
+    <lightning-input
+      name="lastName"  
+      type="text" 
+      label="Last Name"
+      value={lastName} 
+      onchange={handleInputChange}>
+    </lightning-input>
+    <lightning-input 
+      name="email" 
+      type="email" 
+      label="Email"
+      value={email} 
+      onchange={handleInputChange}>
+    </lightning-input>
+    <lightning-input 
+      name="phone" 
+      type="phone" 
+      label="Phone" 
+      value={phone} 
+      onchange={handleInputChange}>
+    </lightning-input>
+
+    <lightning-button
+      label="Add Contact"
+      variant="brand"
+      onclick={handleNewContact}>
+    </lightning-button>
+   </div> 
+</template>
