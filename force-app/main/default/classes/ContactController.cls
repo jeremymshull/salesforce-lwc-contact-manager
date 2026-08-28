@@ -10,7 +10,13 @@ public with sharing class ContactController {
     }
 
     @AuraEnabled
-    public static void createContact(String firstName, String lastName, String email, String phone, Id accountId) {
+    public static void createContact(
+        String firstName,
+        String lastName,
+        String email,
+        String phone,
+        Id accountId
+    ) {
         Contact newContact = new Contact(
             FirstName = firstName,
             LastName = lastName,
@@ -19,17 +25,26 @@ public with sharing class ContactController {
             AccountId = accountId
         );
 
-        insert as user newContact;
+        try {
+            insert as user newContact;
+        } catch (DmlException e) {
+            throw new AuraHandledException(e.getDmlMessage(0));
+        }
     }
 
     @AuraEnabled
     public static List<Contact> updateContacts(List<Contact> contacts) {
-        update as user contacts;
-        return [
-            SELECT Id, FirstName, LastName, Email, Phone
-            FROM Contact 
-            WHERE Id IN :contacts
-            WITH USER_MODE
-        ];
+        try {
+            update as user contacts;
+
+            return [
+                SELECT Id, FirstName, LastName, Email, Phone
+                FROM Contact
+                WHERE Id IN :contacts
+                WITH USER_MODE
+            ];
+        } catch (DmlException e) {
+            throw new AuraHandledException(e.getDmlMessage(0));
+        }
     }
 }
